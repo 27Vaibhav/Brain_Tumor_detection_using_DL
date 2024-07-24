@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Tumor Detection</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .custom-file-upload {
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+        .custom-file-upload:hover {
+            background-color: #0056b3;
+        }
+        .preview-container {
+            display: flex;
+            align-items: center;
+        }
+        .preview-img {
+            max-width: 100%;
+            max-height: 100px;
+            margin-left: 10px;
+            display: none;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        .info-card {
+            margin-top: 50px;
+        }
+        #spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Brain Tumor Detection</a>
+    </nav>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h1 class="card-title">Upload MRI Image</h1>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data">
+                            <div class="form-group preview-container">
+                                <label for="file-upload" class="custom-file-upload">
+                                    <i class="fa fa-cloud-upload"></i> Choose Image
+                                </label>
+                                <input id="file-upload" type="file" name="file" accept="image/*" style="display:none;" required>
+                                <img id="preview" class="preview-img" src="#" alt="Selected Image Preview">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Predict</button>
+                        </form>
+                        <div id="spinner" class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <div id="result" class="alert" role="alert" style="display:none;"></div>
+                    </div>
+                </div>
+                <div class="card info-card">
+                    <div class="card-body">
+                        <h5 class="card-title">How it Works</h5>
+                        <p class="card-text">Upload an MRI image of the brain, and our AI model will predict whether a tumor is present or not. The prediction is based on a deep learning model trained on a dataset of MRI images.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.getElementById('file-upload').onchange = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                document.querySelector('.custom-file-upload').innerText = file.name;
+            }
+        };
+
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            document.getElementById('spinner').style.display = 'inline-block';
+            const form = e.target;
+            const formData = new FormData(form);
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerText = 'Prediction: ' + result.result;
+            resultDiv.style.display = 'block';
+            document.getElementById('spinner').style.display = 'none';
+
+            if (result.result === 'Positive') {
+                resultDiv.classList.remove('alert-danger');
+                resultDiv.classList.add('alert-success');
+            } else {
+                resultDiv.classList.remove('alert-success');
+                resultDiv.classList.add('alert-danger');
+            }
+        };
+    </script>
+</body>
+</html>
